@@ -1,0 +1,34 @@
+{
+	admin off
+	# Siehe Caddyfile.dev fuer die Begruendung: Caddys eigener automatischer HTTP->HTTPS-Redirect
+	# kennt den nicht-standardmaessigen HTTPS-Port nicht und wuerde sonst Vorrang vor dem eigenen
+	# ":80"-Block unten bekommen.
+	auto_https disable_redirects
+}
+
+:80 {
+	redir https://{host}:{$CADDY_HTTPS_PORT}{uri} permanent
+}
+
+# Grundgeruest fuer das Prod-Profil - noch nicht vollstaendig ausgebaut (siehe VERSIONS.md /
+# CLAUDE.md "Dev/live environment separation": das Prod-Profil muss zum Projektstart noch nicht
+# voll funktionsfaehig sein). Statische Frontend-Assets werden aus einem gemounteten Verzeichnis
+# ausgeliefert (Ergebnis von frontend/Dockerfile.prod), /api/* geht an das Backend.
+localhost:443, betquote.localhost:443 {
+	tls internal
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle {
+		root * /srv/frontend
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

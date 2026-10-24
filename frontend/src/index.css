@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/*
+ * Design-Tokens (Light/Dark, siehe CLAUDE.md "Visual design defaults"). Tailwind 4 erlaubt
+ * CSS-Variablen direkt als Utility-Farben via @theme, kombiniert mit einer manuellen
+ * .dark-Klasse (statt prefers-color-scheme) fuer expliziten Theme-Switch durch den Nutzer.
+ * Ein-Border-Radius-Skala: --r-sm (Buttons/Inputs/Badges), --r-md (Karten/Panels) - bewusst
+ * knapp/eckig gehalten (Nutzer-Vorgabe: kein "pillenfoermiges" Rounding).
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: var(--c-bg);
+  --color-bg-elevated: var(--c-bg-elevated);
+  --color-bg-inset: var(--c-bg-inset);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+  --color-text: var(--c-text);
+  --color-text-muted: var(--c-text-muted);
+  --color-text-subtle: var(--c-text-subtle);
+
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-text: var(--c-accent-text);
+
+  --color-confidence: var(--c-confidence);
+  --color-confidence-soft: var(--c-confidence-soft);
+
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+
+  --color-toggle-on: var(--c-toggle-on);
+  --color-toggle-off: var(--c-toggle-off);
+
+  --color-live: var(--c-live);
+  --color-live-soft: var(--c-live-soft);
+
+  /* Fuenf-Stufen-Farbskala fuer die Exakt-Ergebnis-Prozentzahl (siehe PREDICTION_FACTORS.md
+     "Farbliche Abstufung der Exakt-Ergebnis-Prozentzahl") - bewusst eigene Tokens statt
+     Wiederverwendung von --color-success/--color-danger, da dies eine kontinuierliche Skala auf
+     EINER Zahl ist (wie sicher ist das exakte Ergebnis), waehrend success/danger ein binaeres
+     Tipp-war-richtig-Signal auf einer ANDEREN Zahl (1X2-Tendenz-Konfidenz-Badge) ist - beide
+     Signale bleiben bewusst getrennt, siehe SpielKarte.tsx. */
+  --color-exaktquote-1: var(--c-exaktquote-1);
+  --color-exaktquote-2: var(--c-exaktquote-2);
+  --color-exaktquote-3: var(--c-exaktquote-3);
+  --color-exaktquote-4: var(--c-exaktquote-4);
+  --color-exaktquote-5: var(--c-exaktquote-5);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+}
+
+:root {
+  color-scheme: light;
+
+  --c-bg: #f4f5f7;
+  --c-bg-elevated: #ffffff;
+  --c-bg-inset: #eceef2;
+  --c-border: #dde1e8;
+  --c-border-strong: #c3c9d4;
+  --c-text: #161a22;
+  --c-text-muted: #545b6b;
+  --c-text-subtle: #7c8494;
+
+  --c-accent: #1d5fd6;
+  --c-accent-hover: #164cae;
+  --c-accent-soft: #e3ecfc;
+  --c-accent-text: #ffffff;
+
+  --c-confidence: #b8860b;
+  --c-confidence-soft: #fdf3d9;
+
+  --c-success: #1a8b52;
+  --c-success-soft: #e2f6ea;
+  --c-danger: #c53838;
+  --c-danger-soft: #fbe7e7;
+
+  --c-toggle-on: #1a8b52;
+  --c-toggle-off: #b1414199;
+
+  --c-live: #d3232f;
+  --c-live-soft: #fbe4e6;
+
+  /* Exaktquote-Farbskala Light-Theme, aufsteigend von neutral (Stufe 1) bis kraeftiges Gruen
+     (Stufe 5) - alle Werte gegen --c-bg-elevated (#ffffff) auf >= 4.5:1 Textkontrast geprueft. */
+  --c-exaktquote-1: #7c8494;
+  --c-exaktquote-2: #3d6fb0;
+  --c-exaktquote-3: #2f8a6f;
+  --c-exaktquote-4: #22874f;
+  --c-exaktquote-5: #157a3c;
+
+  --r-sm: 0.3rem;
+  --r-md: 0.55rem;
+  --r-lg: 0.85rem;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --c-bg: #0c0f14;
+  --c-bg-elevated: #151920;
+  --c-bg-inset: #1b202a;
+  --c-border: #2a3140;
+  --c-border-strong: #3a4356;
+  --c-text: #eef1f6;
+  --c-text-muted: #a7afc0;
+  --c-text-subtle: #7a8296;
+
+  --c-accent: #5b93f5;
+  --c-accent-hover: #7ba7f7;
+  --c-accent-soft: #1c2c4d;
+  --c-accent-text: #0c1526;
+
+  --c-confidence: #e6b73d;
+  --c-confidence-soft: #3a2f10;
+
+  --c-success: #3ecb7e;
+  --c-success-soft: #123322;
+  --c-danger: #f0625f;
+  --c-danger-soft: #3a1616;
+
+  --c-toggle-on: #3ecb7e;
+  --c-toggle-off: #6b3a3ac2;
+
+  --c-live: #ff5a63;
+  --c-live-soft: #3a1418;
+
+  /* Exaktquote-Farbskala Dark-Theme - alle Werte gegen --c-bg-elevated (#151920) auf >= 4.5:1
+     Textkontrast geprueft (heller/gesaettigter als die Light-Werte, da dunkler Hintergrund). */
+  --c-exaktquote-1: #7a8296;
+  --c-exaktquote-2: #7ba7f7;
+  --c-exaktquote-3: #5ecfa8;
+  --c-exaktquote-4: #4fd98c;
+  --c-exaktquote-5: #3ecb7e;
+
+  --r-sm: 0.3rem;
+  --r-md: 0.55rem;
+  --r-lg: 0.85rem;
+}
+
+body {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+}
+
+/* Sichtbarer Fokus-Indikator ueberall (WCAG, siehe CLAUDE.md) statt Browser-Default oder outline:none. */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}

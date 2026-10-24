@@ -1,0 +1,43 @@
+{
+	admin off
+	# Caddys eigener automatischer HTTP->HTTPS-Redirect (Standardverhalten fuer jede Site mit
+	# automatischem HTTPS) kennt den tatsaechlich verwendeten, nicht-standardmaessigen HTTPS-Port
+	# (CADDY_HTTPS_PORT) nicht und erzeugt einen eigenen 308-Redirect OHNE Port, der Vorrang vor
+	# dem eigenen ":80"-Block unten hat - "disable_redirects" schaltet das ab, damit ausschliesslich
+	# der eigene ":80"-Block (der den Port korrekt anhaengt) greift.
+	auto_https disable_redirects
+}
+
+# Plain HTTP just redirects to HTTPS - CADDY_HTTPS_PORT is whatever start.ps1 actually
+# mapped on the host (see ports.json / .env, fixed per the project's port-registry block).
+:80 {
+	redir https://{host}:{$CADDY_HTTPS_PORT}{uri} permanent
+}
+
+# Hostname must be explicit (not a bare ":443") - "tls internal" only auto-issues a
+# certificate for names it actually knows about from the site address, so a hostless block
+# would leave every TLS ClientHello unmatched ("no certificate available").
+# betquote.localhost is a memorable alias - ".localhost" is a browser/OS-reserved TLD
+# (RFC 6761) that resolves straight to 127.0.0.1 with zero DNS lookup, no setup needed.
+# The port still has to be in the URL, since host ports 80/443 are already taken by this
+# machine's own IIS.
+localhost:443, betquote.localhost:443 {
+	# No public domain here (local dev stack), so Caddy issues its own locally-trusted
+	# certificate instead of requesting one from Let's Encrypt. The browser only shows a
+	# green padlock once that internal CA root is trusted on the host - start.ps1 installs
+	# it automatically.
+	tls internal
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle {
+		reverse_proxy frontend:5192
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

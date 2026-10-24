@@ -1,0 +1,47 @@
+#!/bin/sh
+# Aktualisiert version.txt nach jedem Commit und stempelt die neueste CHANGELOG.dev.md-
+# Ueberschrift mit Datum/Uhrzeit (siehe globale CLAUDE.md, Abschnitt "Versioning scheme" /
+# "Changelogs").
+#
+# Versionsformat: vYear.Month.CommitOfTheYear (kein Zero-Padding, kein Tages-Segment). Der
+# letzte Teil zaehlt alle Commits seit Jahresbeginn (nicht die Gesamtzahl im Repo und nicht pro
+# Tag), damit er einmal pro Kalenderjahr bei 1 neu beginnt und dazwischen ein sinnvolles "wie
+# viele Commits dieses Jahr" bleibt.
+#
+# version.txt laeuft dadurch dem jeweils letzten Commit bewusst um genau einen Stand voraus: der
+# Hook schreibt NACH dem Commit, der naechste Commit nimmt die Aenderung (Datei-Aenderung selbst)
+# mit in den Verlauf. Kein "git add"/"commit --amend" hier (das wuerde post-commit rekursiv
+# erneut ausloesen).
+
+set -e
+
+repo_root=$(git rev-parse --show-toplevel)
+year=$(date +%Y)
+date_part=$(date +%Y.%-m)
+commits_this_year=$(git rev-list --count HEAD --since="${year}-01-01T00:00:00")
+
+version="v${date_part}.${commits_this_year}"
+
+printf '%s' "$version" > "$repo_root/version.txt"
+# Auch fuers Backend-Docker-Image mitfuehren, damit ein lokaler "dotnet run" (ausserhalb von
+# Docker) ebenfalls die aktuelle Version liest, ohne extra Volume-Mount - siehe
+# backend/Controllers/VersionController.cs.
+cp "$repo_root/version.txt" "$repo_root/backend/version.txt" 2>/dev/null || true
+
+# CHANGELOG.dev.md: die neueste Versions-Ueberschrift je Sprachabschnitt (erste "## v..."-Zeile
+# nach der jeweiligen "# English"/"# Deutsch"-Ueberschrift) mit Datum/Uhrzeit stempeln, damit die
+# exakte Commit-Zeit beim Vorbereiten des Eintrags nicht erraten werden muss.
+changelog="$repo_root/CHANGELOG.dev.md"
+if [ -f "$changelog" ]; then
+    stamp=$(date "+%Y-%m-%d %H:%M")
+    tmp=$(mktemp)
+    awk -v ver="$version" -v stamp="$stamp" '
+        /^# / { in_section = 1; stamped = 0 }
+        in_section && !stamped && /^## v/ {
+            print "## " ver " - " stamp
+            stamped = 1
+            next
+        }
+        { print }
+    ' "$changelog" > "$tmp" && mv "$tmp" "$changelog"
+fi

@@ -1,0 +1,47 @@
+# Secrets - niemals committen (siehe CLAUDE.md "Secrets management fuer lokale Docker
+# Compose Stacks"). start.ps1 generiert diese Dateien beim ersten Lauf automatisch.
+/secrets/
+.env
+.env.dev
+.env.prod
+.env.local
+*.env
+
+# .NET
+backend/bin/
+backend/obj/
+backend/**/bin/
+backend/**/obj/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / Editor
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Caddy lokale CA/State (persistiert im Docker-Volume, nicht im Repo)
+docker/caddy/data/
+
+# Backup-Dumps (siehe database-Agent-Konventionen, keine DB-Dumps ins Repo)
+*.sql
+*.dump
+*.bak
+/backups/

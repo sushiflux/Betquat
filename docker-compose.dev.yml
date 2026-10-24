@@ -1,0 +1,49 @@
+# Dev-Override: separates Volume, Hot-Reload-Mounts, offene Ports fuer direkten Zugriff/Debugging.
+# Compose-Projektname "betquote" (siehe CLAUDE.md "Container naming") - Container heissen dadurch
+# z.B. "betquote-backend-1".
+name: betquote
+
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5194}:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql
+
+  backend:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    volumes:
+      - ./backend:/app
+      - backend_nuget_cache:/root/.nuget/packages
+    ports:
+      - "${BACKEND_PORT:-5193}:8080"
+
+  frontend:
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-5192}:5192"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5192"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  caddy:
+    environment:
+      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-5191}
+    ports:
+      - "${CADDY_HTTP_PORT:-5190}:80"
+      - "${CADDY_HTTPS_PORT:-5191}:443"
+    volumes:
+      - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - caddy_data_dev:/data
+
+volumes:
+  postgres_data_dev:
+  backend_nuget_cache:
+  frontend_node_modules:
+  caddy_data_dev:

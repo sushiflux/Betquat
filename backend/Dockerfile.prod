@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1
+#
+# Build-Context ist das Repo-Root (siehe docker-compose.yml: build.context: .), damit
+# version.txt (vom post-commit-Hook im Repo-Root gepflegt) mit reinkopiert werden kann.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY backend/BetQuote.Api.csproj backend/
+RUN dotnet restore "backend/BetQuote.Api.csproj"
+
+COPY backend/ backend/
+RUN dotnet publish "backend/BetQuote.Api.csproj" -c Release -o /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+# version.txt: siehe VersionController.cs - live gelesen, kein Neustart fuer ein Update noetig.
+COPY version.txt ./version.txt
+
+ENTRYPOINT ["dotnet", "BetQuote.Api.dll"]

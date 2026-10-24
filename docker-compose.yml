@@ -1,0 +1,66 @@
+# Basis-Compose-Datei: enthaelt nur, was zwischen Dev- und Prod-Profil geteilt wird (Service-
+# Namen, Images, interne Ports, Secrets-Wiring). Umgebungsspezifisches (ASPNETCORE_ENVIRONMENT,
+# Volumes, Compose-Projektname) steckt in docker-compose.dev.yml / docker-compose.prod.yml -
+# siehe CLAUDE.md "Dev/live environment separation". Gestartet wird nie direkt mit dieser Datei
+# allein, sondern immer ueber start.ps1 (-Env dev|prod), das die passende Override-Datei mit
+# einschichtet.
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-betquote}
+      POSTGRES_USER: ${POSTGRES_USER:-betquote}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-betquote} -d ${POSTGRES_DB:-betquote}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      # Kein Passwort im Klartext als Env-Var - POSTGRES_PASSWORD_FILE zeigt auf das per Compose
+      # Secret gemountete File, Program.cs baut daraus zur Laufzeit den vollstaendigen
+      # Connection-String zusammen (siehe "Secrets management" in der globalen CLAUDE.md).
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-betquote}
+      POSTGRES_USER: ${POSTGRES_USER:-betquote}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      # La-Liga-Import (football-data.org) - siehe .env.example fuer die Registrierung, leer/nicht
+      # gesetzt bedeutet "La-Liga-Import bleibt inaktiv", kein Fehlerzustand fuer den Rest der App.
+      FOOTBALL_DATA_ORG_API_KEY: ${FOOTBALL_DATA_ORG_API_KEY:-}
+    secrets:
+      - postgres_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # "wget --spider" scheitert bei einer chunked-transfer-encoded Antwort ohne
+      # Content-Length (Kestrel liefert JSON so aus) - deshalb ein echter GET ins Leere.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - backend
+      - frontend
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt

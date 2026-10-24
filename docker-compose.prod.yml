@@ -1,0 +1,48 @@
+# Prod-Override: eigener Compose-Projektname/eigene Volumes (nie mit Dev-Daten vermischt),
+# Production-Umgebungsvariablen. Noch NICHT vollstaendig funktionsfaehig als Grundgeruest
+# (siehe CLAUDE.md "Dev/live environment separation": beim Projektstart reicht das) - offene
+# Punkte:
+#   - frontend-Image (Dockerfile.prod, Target "export") liefert nur einen "scratch"-Layer mit
+#     /dist zurueck, muss noch per Build-Skript/Init-Container in ein von Caddy gemountetes
+#     Volume kopiert werden, bevor Caddy es tatsaechlich ausliefern kann.
+#   - Kein eigener Secrets-Bootstrap-Schritt fuer die Live-Umgebung geprueft (start.ps1 generiert
+#     aktuell nur ein gemeinsames ./secrets/-Verzeichnis fuer beide Profile - fuer eine echte
+#     Live-Trennung ggf. spaeter eigene Secret-Dateien pro Umgebung einfuehren).
+name: betquote-live
+
+services:
+  postgres:
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql
+    # Kein Host-Port-Mapping im Prod-Profil - nur ueber das interne Docker-Netzwerk erreichbar.
+
+  backend:
+    build:
+      # Prod-Dockerfile braucht das Repo-Root als Context (fuer version.txt), anders als das
+      # Dev-Dockerfile - deshalb hier Context UND Dockerfile-Pfad gegenueber der Basis-Datei
+      # ueberschrieben.
+      context: .
+      dockerfile: backend/Dockerfile.prod
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    # Kein Source-Volume-Mount im Prod-Profil - laeuft mit dem im Image gebauten Stand.
+
+  frontend:
+    build:
+      dockerfile: Dockerfile.prod
+    # Liefert aktuell nur einen "scratch"-Export-Layer (/dist) - noch nicht an Caddy
+    # durchverdrahtet, siehe Hinweis oben.
+
+  caddy:
+    environment:
+      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-5191}
+    ports:
+      - "${CADDY_HTTP_PORT:-5190}:80"
+      - "${CADDY_HTTPS_PORT:-5191}:443"
+    volumes:
+      - ./docker/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data_prod:/data
+
+volumes:
+  postgres_data_prod:
+  caddy_data_prod:
