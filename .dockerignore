@@ -5,3 +5,5 @@
 .git/
 secrets/
 *.md
+# The private intern/ folder is never part of an image.
+/intern/

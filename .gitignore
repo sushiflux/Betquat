@@ -45,3 +45,6 @@ docker/caddy/data/
 *.dump
 *.bak
 /backups/
+
+# Private development documents: intern/ is its own private repository.
+/intern/

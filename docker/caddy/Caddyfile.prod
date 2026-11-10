@@ -10,9 +10,8 @@
 	redir https://{host}:{$CADDY_HTTPS_PORT}{uri} permanent
 }
 
-# Grundgeruest fuer das Prod-Profil - noch nicht vollstaendig ausgebaut (siehe VERSIONS.md /
-# CLAUDE.md "Dev/live environment separation": das Prod-Profil muss zum Projektstart noch nicht
-# voll funktionsfaehig sein). Statische Frontend-Assets werden aus einem gemounteten Verzeichnis
+# Grundgeruest fuer das Prod-Profil - noch nicht vollstaendig ausgebaut (das Prod-Profil muss zum
+# Projektstart noch nicht voll funktionsfaehig sein). Statische Frontend-Assets werden aus einem gemounteten Verzeichnis
 # ausgeliefert (Ergebnis von frontend/Dockerfile.prod), /api/* geht an das Backend.
 localhost:443, betquote.localhost:443 {
 	tls internal

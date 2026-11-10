@@ -1,7 +1,7 @@
 #!/bin/sh
-# Aktualisiert version.txt nach jedem Commit und stempelt die neueste CHANGELOG.dev.md-
-# Ueberschrift mit Datum/Uhrzeit (siehe globale CLAUDE.md, Abschnitt "Versioning scheme" /
-# "Changelogs").
+# Aktualisiert version.txt nach jedem Commit und stempelt die neueste Ueberschrift des
+# privaten Dev-Changelogs (intern/CHANGELOG.dev.md) mit Datum/Uhrzeit.
+# Danach sichert der Hook den git-ignorierten Ordner intern/ ueber das lokal konfigurierte Kommando.
 #
 # Versionsformat: vYear.Month.CommitOfTheYear (kein Zero-Padding, kein Tages-Segment). Der
 # letzte Teil zaehlt alle Commits seit Jahresbeginn (nicht die Gesamtzahl im Repo und nicht pro
@@ -28,10 +28,11 @@ printf '%s' "$version" > "$repo_root/version.txt"
 # backend/Controllers/VersionController.cs.
 cp "$repo_root/version.txt" "$repo_root/backend/version.txt" 2>/dev/null || true
 
-# CHANGELOG.dev.md: die neueste Versions-Ueberschrift je Sprachabschnitt (erste "## v..."-Zeile
-# nach der jeweiligen "# English"/"# Deutsch"-Ueberschrift) mit Datum/Uhrzeit stempeln, damit die
-# exakte Commit-Zeit beim Vorbereiten des Eintrags nicht erraten werden muss.
-changelog="$repo_root/CHANGELOG.dev.md"
+# intern/CHANGELOG.dev.md (private developer changelog, optional - a missing file means nothing
+# happens): stamp the newest version heading of each language section (first "## v..." line after
+# the respective "# English"/"# Deutsch" heading) with date and time, so the exact commit time does
+# not have to be guessed while preparing the entry.
+changelog="$repo_root/intern/CHANGELOG.dev.md"
 if [ -f "$changelog" ]; then
     stamp=$(date "+%Y-%m-%d %H:%M")
     tmp=$(mktemp)
@@ -45,3 +46,19 @@ if [ -f "$changelog" ]; then
         { print }
     ' "$changelog" > "$tmp" && mv "$tmp" "$changelog"
 fi
+
+# The git-ignored intern/ folder (private notes, never part of this repository) is backed up by the command named in the local git
+# config key intern.sync, if one is set, with this commit's version as the message. It runs in the background and may never fail
+# or block the commit that ran the hook.
+sync=$(git config --get intern.sync 2>/dev/null || true)
+if [ -n "$sync" ] && [ -d "$repo_root/intern" ]; then
+    message=$(sed -n '1p' "$repo_root/version.txt" 2>/dev/null | tr -d '\r')
+    [ -n "$message" ] || message="update"
+    (
+        # The hook runs with GIT_DIR/GIT_INDEX_FILE of this repository - the backup command must not inherit them
+        unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_COMMON_DIR
+        sh -c "$sync save \"\$1\" --message \"\$2\"" intern-sync "$repo_root" "$message" >/dev/null 2>&1 &
+    ) || true
+fi
+
+exit 0

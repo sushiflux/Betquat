@@ -4,8 +4,7 @@ Diese Datei fasst zusammen, welche Systeme, Technologien und externen Datenquell
 eingesetzt werden — als schneller Überblick, ohne dass man dafür PREDICTION_FACTORS.md,
 APP_STRUCTURE.md und die Docker-Konfiguration selbst durchsuchen muss. Details/Begründungen zu den
 Datenquellen stehen in [PREDICTION_FACTORS.md](PREDICTION_FACTORS.md) (Abschnitt "Datenquellen"),
-Details zur Seitenstruktur in [APP_STRUCTURE.md](APP_STRUCTURE.md). Laufend aktuell gehaltene
-Versionsnummern stehen in `VERSIONS.md` (wird vom devops-Grundgerüst mit angelegt).
+Details zur Seitenstruktur in [APP_STRUCTURE.md](APP_STRUCTURE.md).
 
 ---
 
@@ -135,7 +134,5 @@ BetQuote/
 ├── scripts/            # start.ps1, Hilfsskripte
 ├── PREDICTION_FACTORS.md   # Fachliche Grundlage: Einflussfaktoren, Datenquellen, Modellansatz
 ├── APP_STRUCTURE.md        # Seitenaufbau/UI-Struktur
-├── TECH_STACK.md           # Diese Datei
-├── VERSIONS.md              # Laufend aktuell gehaltene Versionsübersicht (wird noch angelegt)
-└── QUELLEN.md                # Nachschlagbare externe Quellen/Referenzen (wird noch angelegt)
+└── TECH_STACK.md           # Diese Datei
 ```

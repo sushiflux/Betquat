@@ -2,8 +2,7 @@
 
 **[English](#english) · [Deutsch](#deutsch)**
 
-Grouped by release (tagged version), not by commit - see `CHANGELOG.dev.md` for the full
-per-commit technical history.
+Grouped by release (tagged version), not by commit.
 
 ---
 

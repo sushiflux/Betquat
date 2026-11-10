@@ -45,7 +45,7 @@ public class FootballDataOrgImportService(
     {
         if (!client.IstKonfiguriert)
         {
-            logger.LogWarning("football-data.org-Import uebersprungen: FOOTBALL_DATA_ORG_API_KEY ist nicht gesetzt - siehe QUELLEN.md/Abschlussbericht fuer die Registrierung (https://www.football-data.org/client/register)");
+            logger.LogWarning("football-data.org-Import uebersprungen: FOOTBALL_DATA_ORG_API_KEY ist nicht gesetzt - Registrierung unter https://www.football-data.org/client/register");
             return ImportSummary.Empty with { Fehler = ["FOOTBALL_DATA_ORG_API_KEY nicht konfiguriert - La-Liga-Import uebersprungen"] };
         }
 
